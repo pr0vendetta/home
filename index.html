@@ -25,7 +25,11 @@ body{background:var(--bg);color:var(--fg);font-family:-apple-system,"Helvetica N
   overflow:hidden;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:rgba(0,0,0,0);-webkit-text-size-adjust:100%}
 body.dark{background:#000;color:#5C5C5C}
 *{box-sizing:border-box}
-button{font:inherit;color:inherit;background:none;border:0;padding:0;margin:0;-webkit-appearance:none;cursor:pointer;text-align:inherit}
+/* Кнопки — div role="button": в Safari 10 внутри <button> не работает Flexbox. */
+[role="button"]{cursor:pointer;-webkit-transition:-webkit-transform .08s,opacity .08s;transition:transform .08s,opacity .08s}
+.paybtn,.undo,.more,.move,.back,.ib [role="button"]{display:flex;align-items:center;justify-content:center;text-align:center}
+.more{justify-content:flex-start;text-align:left}
+.pressed{-webkit-transform:scale(.95);transform:scale(.95);opacity:.65}
 #app{height:100%;display:flex;flex-direction:column;padding:18px;position:relative}
 
 .top{display:flex;align-items:center;height:104px;flex:none}
@@ -117,7 +121,7 @@ body.eve .badge{color:#1b1b1b}
 
 .ib{display:flex;align-items:center;min-height:72px;border-bottom:1px solid var(--line);font-size:24px}
 .ib span{flex:1;min-width:0;margin-right:14px}
-.ib button{flex:none;height:56px;padding:0 14px;border:2px solid var(--line);border-radius:12px;background:var(--panel);font-size:19px;font-weight:700;color:var(--acc)}
+.ib [role="button"]{flex:none;height:56px;padding:0 14px;border:2px solid var(--line);border-radius:12px;background:var(--panel);font-size:19px;font-weight:700;color:var(--acc)}
 
 .lst{flex:1;display:flex;flex-wrap:wrap;align-content:flex-start;justify-content:space-between;overflow:hidden}
 .li{width:49.3%;min-height:86px;display:flex;align-items:center;padding:0 22px;border-radius:16px;background:var(--panel);font-size:30px;text-align:left;margin-bottom:12px}
@@ -387,8 +391,8 @@ body.eve .badge{color:#1b1b1b}
   function taskRow(x, now, sm) {
     var done = isDone(x, now);
     var moved = !done && x.moved === ymd(now);
-    return '<button class="task' + (sm ? ' sm' : '') + (done ? ' done' : '') + '" data-a="task" data-row="' + x.row + '" data-text="' + esc(x.text) + '">' +
-      '<span class="chk"></span><span class="tt">' + esc(x.text) + (moved ? '<span class="tag">завтра</span>' : '') + '</span></button>';
+    return '<div role="button" class="task' + (sm ? ' sm' : '') + (done ? ' done' : '') + '" data-a="task" data-row="' + x.row + '" data-text="' + esc(x.text) + '">' +
+      '<span class="chk"></span><span class="tt">' + esc(x.text) + (moved ? '<span class="tag">завтра</span>' : '') + '</span></div>';
   }
 
   function workPanel(now, mode) {
@@ -402,11 +406,11 @@ body.eve .badge{color:#1b1b1b}
       var open = tasksBy('главная', now).concat(tasksBy('остальное', now)).filter(function (x) { return !isDone(x, now); });
       var moved = open.length && open.every(function (x) { return x.moved === ymd(now); });
       foot = moved ? '<div class="note-ok">Перенесено на завтра. Утром они будут первыми.</div>' :
-        open.length ? '<button class="move" data-a="move">Перенести несделанное на завтра (' + open.length + ')</button>' :
+        open.length ? '<div role="button" class="move" data-a="move">Перенести несделанное на завтра (' + open.length + ')</div>' :
         '<div class="note-ok">Всё сделано. Хороший день.</div>';
     } else {
-      foot = '<button class="more" data-a="go" data-v="plan">' + (rest ? 'Ещё ' + rest + ' ' + plural(rest, 'задача', 'задачи', 'задач') : 'Весь план') +
-        (inbox ? ' · ' + inbox + ' во входящих' : '') + '  →</button>';
+      foot = '<div role="button" class="more" data-a="go" data-v="plan">' + (rest ? 'Ещё ' + rest + ' ' + plural(rest, 'задача', 'задачи', 'задач') : 'Весь план') +
+        (inbox ? ' · ' + inbox + ' во входящих' : '') + '  →</div>';
     }
     return '<section class="panel"><div class="ph"><span>Главное сегодня</span><span>' + (shown.length ? done + ' из ' + shown.length : '') + '</span></div>' + h + foot + '</section>';
   }
@@ -432,7 +436,7 @@ body.eve .badge{color:#1b1b1b}
 
   function payCard(p, now) {
     return '<div class="pc ' + level(p, now) + '"><div class="pc-tx"><div class="pc-n">' + esc(p.name) + '</div><div class="pc-s">' +
-      dueWord(p, now) + ' · ' + dueTxt(p) + '</div></div><button class="paybtn" data-a="pay" data-row="' + p.row + '" data-name="' + esc(p.name) + '">Оплачено</button></div>';
+      dueWord(p, now) + ' · ' + dueTxt(p) + '</div></div><div role="button" class="paybtn" data-a="pay" data-row="' + p.row + '" data-name="' + esc(p.name) + '">Оплачено</div></div>';
   }
 
   function payPanel(now) {
@@ -452,7 +456,7 @@ body.eve .badge{color:#1b1b1b}
       var badge = '';
       if (b[i][0] === 'pay' && red) badge = '<span class="badge">' + red + '</span>';
       if (b[i][0] === 'dates' && soon >= 0) badge = '<span class="badge soft">' + (soon === 0 ? 'сегодня' : soon + ' дн') + '</span>';
-      h += '<button class="db" data-a="go" data-v="' + b[i][2] + '"><svg viewBox="0 0 24 24">' + ICONS[b[i][0]] + '</svg>' + b[i][1] + badge + '</button>';
+      h += '<div role="button" class="db" data-a="go" data-v="' + b[i][2] + '"><svg viewBox="0 0 24 24">' + ICONS[b[i][0]] + '</svg>' + b[i][1] + badge + '</div>';
     }
     return h + '</div>';
   }
@@ -462,7 +466,7 @@ body.eve .badge{color:#1b1b1b}
   }
 
   function subHead(t) {
-    return '<div class="sub-h"><button class="back" data-a="go" data-v="home">← Главная</button><div class="sub-t">' + t +
+    return '<div class="sub-h"><div role="button" class="back" data-a="go" data-v="home">← Главная</div><div class="sub-t">' + t +
       '</div><div class="sub-r" id="cd">Сам вернётся на главный<br>через ' + U.left + ' с</div></div>';
   }
 
@@ -477,8 +481,8 @@ body.eve .badge{color:#1b1b1b}
         (p.debt && p.amount ? '<span class="amt">' + short(p.amount) + ' ₸</span>' : '') + '</div><div class="pc-s">' + dueTxt(p) + ' · ' +
         (paid ? 'оплачено ' + Number(p.paid.slice(8)) + ' ' + MONTHS_G[Number(p.paid.slice(5, 7)) - 1] : dueWord(p, now)) +
         (p.note ? ' · ' + esc(p.note) : '') + '</div></div>' +
-        '<button class="' + (paid ? 'undo' : 'paybtn') + '" data-a="' + (paid ? 'unpay' : 'pay') + '" data-row="' + p.row + '" data-name="' + esc(p.name) + '">' +
-        (paid ? 'Отменить' : 'Оплачено') + '</button></div>';
+        '<div role="button" class="' + (paid ? 'undo' : 'paybtn') + '" data-a="' + (paid ? 'unpay' : 'pay') + '" data-row="' + p.row + '" data-name="' + esc(p.name) + '">' +
+        (paid ? 'Отменить' : 'Оплачено') + '</div></div>';
     }
     if (!list.length) h += '<div class="empty">Платежей пока нет. Добавьте их в таблицу, лист «Платежи».</div>';
     h += '</div></section><section class="panel"><div class="ph"><span>Долги</span><span>сколько осталось</span></div>';
@@ -506,15 +510,15 @@ body.eve .badge{color:#1b1b1b}
     var h = subHead('План на день') + '<div class="cols"><section class="panel wide"><div class="ph"><span>Главные</span><span>' + main.length + ' из 3</span></div>';
     for (i = 0; i < main.length; i++) h += taskRow(main[i], now, main.length > 3);
     if (!main.length) h += '<div class="empty">Нажмите «В главные» у задачи справа.</div>';
-    if (mode === 'eve') h += '<button class="move" data-a="move">Перенести несделанное на завтра</button>';
+    if (mode === 'eve') h += '<div role="button" class="move" data-a="move">Перенести несделанное на завтра</div>';
     h += '</section><section class="panel"><div class="ph"><span>Остальное</span></div>';
     for (i = 0; i < rest.length; i++) h += taskRow(rest[i], now, true);
     if (!rest.length) h += '<div class="empty">Пусто</div>';
     if (inbox.length) {
       h += '<div class="ph ph2"><span>Входящие</span></div>';
       for (i = 0; i < inbox.length; i++) {
-        h += '<div class="ib"><span>' + esc(inbox[i].text) + '</span><button data-a="take" data-row="' + inbox[i].row + '" data-text="' + esc(inbox[i].text) + '">' +
-          (main.filter(function (x) { return !isDone(x, now); }).length < 3 ? 'В главные' : 'В план') + '</button></div>';
+        h += '<div class="ib"><span>' + esc(inbox[i].text) + '</span><div role="button" data-a="take" data-row="' + inbox[i].row + '" data-text="' + esc(inbox[i].text) + '">' +
+          (main.filter(function (x) { return !isDone(x, now); }).length < 3 ? 'В главные' : 'В план') + '</div></div>';
       }
     }
     return h + '</section></div>';
@@ -533,8 +537,8 @@ body.eve .badge{color:#1b1b1b}
     } else {
       var items = D[key].slice(0, 12);
       for (i = 0; i < items.length; i++) {
-        h += '<button class="li' + (isDone(items[i], now) ? ' done' : '') + '" data-a="item" data-list="' + key + '" data-row="' + items[i].row + '" data-text="' + esc(items[i].text) +
-          '"><span class="chk"></span><span class="tt">' + esc(items[i].text) + '</span></button>';
+        h += '<div role="button" class="li' + (isDone(items[i], now) ? ' done' : '') + '" data-a="item" data-list="' + key + '" data-row="' + items[i].row + '" data-text="' + esc(items[i].text) +
+          '"><span class="chk"></span><span class="tt">' + esc(items[i].text) + '</span></div>';
       }
       if (!items.length) h += '<div class="empty">Список пуст</div>';
     }
@@ -594,6 +598,19 @@ body.eve .badge{color:#1b1b1b}
 
   // ---------- касания ----------
   function find(list, row) { for (var i = 0; i < list.length; i++) if (String(list[i].row) === String(row)) return list[i]; return null; }
+
+  // Отклик на касание: кнопка сразу «вдавливается», не дожидаясь перерисовки.
+  var pressed = null;
+  function release() { if (pressed) { pressed.className = pressed.className.replace(/ ?pressed/g, ''); pressed = null; } }
+  app.addEventListener('touchstart', function (e) {
+    release();
+    var el = e.target;
+    while (el && el !== app && !(el.getAttribute && el.getAttribute('data-a'))) el = el.parentNode;
+    if (el && el !== app) { el.className += ' pressed'; pressed = el; }
+  }, false);
+  app.addEventListener('touchmove', release, false);
+  app.addEventListener('touchcancel', release, false);
+  app.addEventListener('touchend', function () { setTimeout(release, 150); }, false);
 
   app.addEventListener('click', function (e) {
     var now = new Date();
