@@ -651,8 +651,7 @@ body.eve .badge{color:#1b1b1b}
         '<div class="swx-w">' + o.wear + '</div>' + (o.tips.length ? '<div class="swx-tips">' + cap(o.tips.join(' · ')) + '</div>' : '') + '</div>';
     }
     var open = function (st) { return tasksBy(st, now).filter(function (x) { return !isDone(x, now); }); };
-    var tl = open('главная'), tk = '';
-    if (!tl.length) tl = open('остальное');
+    var tl = open('главная').concat(open('остальное'), open('входящие')), tk = '';
     for (i = 0; i < tl.length && i < 3; i++) tk += '<div><i></i>' + esc(tl[i].text) + '</div>';
     if (tl.length > 3) tk += '<div class="more">и ещё ' + (tl.length - 3) + '</div>';
     return '<div class="nt sleep"><div class="sgreet">' + greeting(now) + '</div><div class="sdate">' + WD[now.getDay()] + ', ' + now.getDate() + ' ' + MONTHS_G[now.getMonth()] +
