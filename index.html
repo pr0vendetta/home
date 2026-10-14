@@ -164,6 +164,12 @@ body.eve .badge{color:#1b1b1b}
 .stask i{display:inline-block;width:18px;height:18px;border:3px solid #6A5A9A;border-radius:50%;margin-right:16px;vertical-align:middle}
 .stask .more{font-size:22px;color:#5A5A5A}
 .nwx{font-size:24px;color:#363636;margin-top:14px}
+.night .sgreet{font-size:56px;color:#4A4A4A}
+.night .sdate{color:#383838}
+.night .nclock{margin-top:6px}
+.night .stask{border-top-color:#1E1E1E}
+.night .stask div{font-size:26px;color:#3F3F3F}
+.night .stask i{border-color:#3A3350}
 .nrem{color:#6B3430;margin-top:8px}
 .sleep .nline{color:#555}
 .sig{margin-top:14px;text-align:center}
@@ -630,11 +636,21 @@ body.eve .badge{color:#1b1b1b}
       if (d <= (late ? 1 : 0)) { remind = (late && d === 1 ? 'Завтра: ' : 'Не забыть: ') + esc(u[i].name) + ', до ' + u[i].day + '-го'; break; }
     }
     var w = D.weather, tmr = w && outfitTomorrow(w);
-    return '<div class="nt"><div class="nclock">' + hm(now) + '</div>' +
-      '<div class="nline">Доброй ночи · ' + WD[now.getDay()].toLowerCase() + ', ' + now.getDate() + ' ' + MONTHS_G[now.getMonth()] + '</div>' +
+    return '<div class="nt night"><div class="sgreet">' + greeting(now) + '</div><div class="sdate">' + dateLine(now) + '</div>' +
+      '<div class="nclock">' + hm(now) + '</div>' +
       (remind ? '<div class="nline nrem">' + remind + '</div>' : '') +
       (tmr ? '<div class="nwx">Завтра ' + deg(w.tmrMin) + '…' + deg(w.tmrMax) + ', ' + wxDesc(w.tmrCode) + ' · ' + tmr.wear.toLowerCase() +
-        (tmr.tips.indexOf('возможен гололёд') >= 0 ? ' · возможен гололёд' : '') + '</div>' : '') + '</div>';
+        (tmr.tips.indexOf('возможен гололёд') >= 0 ? ' · возможен гололёд' : '') + '</div>' : '') + taskList(now) + '</div>';
+  }
+
+  function dateLine(now) { return WD[now.getDay()] + ', ' + now.getDate() + ' ' + MONTHS_G[now.getMonth()]; }
+
+  function taskList(now) {
+    var open = function (st) { return tasksBy(st, now).filter(function (x) { return !isDone(x, now); }); };
+    var tl = open('главная').concat(open('остальное'), open('входящие')), tk = '', i;
+    for (i = 0; i < tl.length && i < 3; i++) tk += '<div><i></i>' + esc(tl[i].text) + '</div>';
+    if (tl.length > 3) tk += '<div class="more">и ещё ' + (tl.length - 3) + '</div>';
+    return tk ? '<div class="stask">' + tk + '</div>' : '';
   }
 
   function sleepView(now) {
@@ -650,12 +666,8 @@ body.eve .badge{color:#1b1b1b}
         (a ? ' <i class="dot" style="background:' + a.c + '"></i>' : '') + '</div>' +
         '<div class="swx-w">' + o.wear + '</div>' + (o.tips.length ? '<div class="swx-tips">' + cap(o.tips.join(' · ')) + '</div>' : '') + '</div>';
     }
-    var open = function (st) { return tasksBy(st, now).filter(function (x) { return !isDone(x, now); }); };
-    var tl = open('главная').concat(open('остальное'), open('входящие')), tk = '';
-    for (i = 0; i < tl.length && i < 3; i++) tk += '<div><i></i>' + esc(tl[i].text) + '</div>';
-    if (tl.length > 3) tk += '<div class="more">и ещё ' + (tl.length - 3) + '</div>';
-    return '<div class="nt sleep"><div class="sgreet">' + greeting(now) + '</div><div class="sdate">' + WD[now.getDay()] + ', ' + now.getDate() + ' ' + MONTHS_G[now.getMonth()] +
-      '</div><div class="nclock">' + hm(now) + '</div>' + wx + (sig ? '<div class="sig">' + sig + '</div>' : '') + (tk ? '<div class="stask">' + tk + '</div>' : '') +
+    return '<div class="nt sleep"><div class="sgreet">' + greeting(now) + '</div><div class="sdate">' + dateLine(now) +
+      '</div><div class="nclock">' + hm(now) + '</div>' + wx + (sig ? '<div class="sig">' + sig + '</div>' : '') + taskList(now) +
       '</div><div class="nhint">Коснитесь экрана</div>';
   }
 
