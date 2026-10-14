@@ -151,17 +151,23 @@ body.eve .badge{color:#1b1b1b}
 .nt{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center}
 .nclock{font-size:210px;font-weight:300;letter-spacing:-4px;color:#4F4F4F;line-height:1}
 .nline{font-size:28px;color:#3D3D3D;margin-top:18px}
-.sleep .nclock{font-size:160px;color:#6A6A6A}
-.swx{margin-top:26px;text-align:center;max-width:900px}
-.swx-t{font-size:34px;color:#8A8A8A}
+.sleep .nclock{font-size:170px;color:#6A6A6A;margin-top:6px}
+.sgreet{font-size:64px;font-weight:600;color:#9A9A9A;line-height:1.1}
+.sdate{font-size:26px;color:#5A5A5A;margin-top:8px}
+.swx{margin-top:14px;text-align:center;max-width:900px}
+.swx-t{font-size:32px;color:#8A8A8A}
 .swx-t span{color:#666}
-.swx-w{font-size:46px;font-weight:600;color:#B0B0B0;margin-top:10px}
-.swx-tips{font-size:24px;color:#707070;margin-top:10px;line-height:1.35}
+.swx-w{font-size:40px;font-weight:600;color:#B0B0B0;margin-top:8px}
+.swx-tips{font-size:22px;color:#707070;margin-top:8px;line-height:1.35}
+.stask{margin-top:26px;padding-top:18px;border-top:1px solid #2A2A2A;width:760px;text-align:left}
+.stask div{font-size:30px;color:#9A9A9A;margin-top:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stask i{display:inline-block;width:18px;height:18px;border:3px solid #6A5A9A;border-radius:50%;margin-right:16px;vertical-align:middle}
+.stask .more{font-size:22px;color:#5A5A5A}
 .nwx{font-size:24px;color:#363636;margin-top:14px}
 .nrem{color:#6B3430;margin-top:8px}
 .sleep .nline{color:#555}
-.sig{margin-top:22px;text-align:center}
-.sig div{font-size:30px;color:#8A8A8A;margin-top:10px}
+.sig{margin-top:14px;text-align:center}
+.sig div{font-size:26px;color:#8A8A8A;margin-top:6px}
 .nhint{position:absolute;bottom:26px;left:0;right:0;text-align:center;font-size:20px;color:#333}
 
 .msg{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;font-size:28px;color:var(--muted);padding:0 80px}
@@ -644,8 +650,14 @@ body.eve .badge{color:#1b1b1b}
         (a ? ' <i class="dot" style="background:' + a.c + '"></i>' : '') + '</div>' +
         '<div class="swx-w">' + o.wear + '</div>' + (o.tips.length ? '<div class="swx-tips">' + cap(o.tips.join(' · ')) + '</div>' : '') + '</div>';
     }
-    return '<div class="nt sleep"><div class="nclock">' + hm(now) + '</div><div class="nline">' + greeting(now) + ' · ' +
-      WD[now.getDay()].toLowerCase() + ', ' + now.getDate() + ' ' + MONTHS_G[now.getMonth()] + '</div>' + wx + (sig ? '<div class="sig">' + sig + '</div>' : '') + '</div><div class="nhint">Коснитесь экрана</div>';
+    var open = function (st) { return tasksBy(st, now).filter(function (x) { return !isDone(x, now); }); };
+    var tl = open('главная'), tk = '';
+    if (!tl.length) tl = open('остальное');
+    for (i = 0; i < tl.length && i < 3; i++) tk += '<div><i></i>' + esc(tl[i].text) + '</div>';
+    if (tl.length > 3) tk += '<div class="more">и ещё ' + (tl.length - 3) + '</div>';
+    return '<div class="nt sleep"><div class="sgreet">' + greeting(now) + '</div><div class="sdate">' + WD[now.getDay()] + ', ' + now.getDate() + ' ' + MONTHS_G[now.getMonth()] +
+      '</div><div class="nclock">' + hm(now) + '</div>' + wx + (sig ? '<div class="sig">' + sig + '</div>' : '') + (tk ? '<div class="stask">' + tk + '</div>' : '') +
+      '</div><div class="nhint">Коснитесь экрана</div>';
   }
 
   function message(title, text) {
