@@ -347,8 +347,9 @@ body.eve .badge{color:#1b1b1b}
     else if (o.aqi > 100) tips.push('воздух так себе — лучше маска');
     return { wear: cap(wear), tips: tips };
   }
+  // Только погода на данный момент, без прогноза на день.
   function outfitToday(w) {
-    return outfit({ feels: w.feels === undefined ? w.t : w.feels, tMin: w.tMin, tMax: w.tMax, rain: w.rain, code: w.code, uv: w.uv, wind: w.wind, aqi: w.aqi });
+    return outfit({ feels: w.feels === undefined ? w.t : w.feels, tMin: w.t, tMax: w.t, rain: 0, code: w.code, uv: w.uv, wind: w.wind, aqi: w.aqi });
   }
   function deg(n) { return (n > 0 ? '+' : '') + n + '°'; }
   function aqiInfo(a) {
@@ -634,7 +635,7 @@ body.eve .badge{color:#1b1b1b}
     return '<div class="nt night"><div class="sgreet">' + greeting(now) + '</div><div class="sdate">' + dateLine(now) + '</div>' +
       '<div class="nclock">' + hm(now) + '</div>' +
       (remind ? '<div class="nline nrem">' + remind + '</div>' : '') +
-      (w ? '<div class="nwx">' + deg(w.t) + ', ' + wxDesc(w.code) + (w.feels !== undefined && w.feels !== w.t ? ' · ощущается ' + deg(w.feels) : '') + '</div>' : '') +
+      (w ? '<div class="nwx">' + deg(w.t) + ', ' + wxDesc(w.code) + (w.feels !== undefined && w.feels !== w.t ? ' · ощущается ' + deg(w.feels) : '') + ' · ' + outfitToday(w).wear.toLowerCase() + '</div>' : '') +
       taskList(now) + '</div>';
   }
 
