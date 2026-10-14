@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ru">
+<html lang="ru" manifest="home.appcache">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
@@ -14,11 +14,15 @@
   --bg:#E8ECF0; --panel:#FFFFFF; --fg:#0F151B; --muted:#56616C; --line:#DDE2E7;
   --red:#B3261E; --red-bg:#FCE3E0; --yel:#7A5600; --yel-bg:#FFEBB0; --ok:#2C7A3F; --ok-bg:#DCF0E1;
   --btn:#FFFFFF; --acc:#1D6A86;
+  --c-pay:#2F6FDB; --c-pay-bg:#E3ECFB; --c-plan:#7A4FD8; --c-plan-bg:#EEE8FB; --c-shop:#C2570A; --c-shop-bg:#FCEBDB;
+  --c-house:#0F8A86; --c-house-bg:#DCF1EF; --c-dates:#C23B7A; --c-dates-bg:#F8E2EC;
 }
 body.eve{
   --bg:#151A20; --panel:#212830; --fg:#F1F4F6; --muted:#A3ADB7; --line:#333C46;
   --red:#FF8F86; --red-bg:#4B2522; --yel:#FFD666; --yel-bg:#443819; --ok:#83D69D; --ok-bg:#1E3828;
   --btn:#29313A; --acc:#6CC0DD;
+  --c-pay:#7AA8FF; --c-pay-bg:#1F2C45; --c-plan:#B096FF; --c-plan-bg:#2B2445; --c-shop:#FFA65A; --c-shop-bg:#3C2A18;
+  --c-house:#5CCFC6; --c-house-bg:#173533; --c-dates:#F383B5; --c-dates-bg:#3B1F2D;
 }
 html,body{height:100%;margin:0}
 body{background:var(--bg);color:var(--fg);font-family:-apple-system,"Helvetica Neue",Helvetica,Arial,sans-serif;line-height:1.2;
@@ -31,6 +35,19 @@ body.dark{background:#000;color:#5C5C5C}
 .more{justify-content:flex-start;text-align:left}
 .pressed{-webkit-transform:scale(.95);transform:scale(.95);opacity:.65}
 #app{height:100%;display:flex;flex-direction:column;padding:18px;position:relative}
+
+/* Цвет раздела: кнопка внизу, заголовок раздела, заголовки панелей, кружки-галочки. */
+.k-pay{--k:var(--c-pay);--kb:var(--c-pay-bg)}
+.k-plan{--k:var(--c-plan);--kb:var(--c-plan-bg)}
+.k-shop{--k:var(--c-shop);--kb:var(--c-shop-bg)}
+.k-house{--k:var(--c-house);--kb:var(--c-house-bg)}
+.k-dates{--k:var(--c-dates);--kb:var(--c-dates-bg)}
+.kc .ph,.kc .sub-t{color:var(--k)}
+.kc .back{background:var(--kb);color:var(--k)}
+.kc .sub-h{border-bottom:4px solid var(--k);padding-bottom:12px;height:100px}
+.kc .chk{border-color:var(--k)}
+.kc .li .chip{color:var(--k);background:var(--kb)}
+.who{font-size:.6em;font-weight:500;color:var(--muted);white-space:nowrap}
 
 .top{display:flex;align-items:center;height:104px;flex:none}
 .top > * + *{margin-left:26px}
@@ -95,7 +112,8 @@ body.dark .off{background:none;color:#7A3A35}
 .dock{display:flex;height:160px;flex:none}
 .dock > * + *{margin-left:16px}
 .db{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:20px;background:var(--btn);font-size:26px;font-weight:600;position:relative;text-align:center}
-.db svg{width:50px;height:50px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;margin-bottom:12px}
+.db{background:var(--kb)}
+.db svg{width:50px;height:50px;fill:none;stroke:var(--k);stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;margin-bottom:12px}
 .badge{position:absolute;top:14px;right:18px;min-width:34px;height:34px;border-radius:17px;background:var(--red);color:#fff;font-size:20px;font-weight:700;line-height:34px;text-align:center;padding:0 8px}
 .badge.soft{background:var(--acc)}
 body.eve .badge{color:#1b1b1b}
@@ -133,7 +151,14 @@ body.eve .badge{color:#1b1b1b}
 .nt{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center}
 .nclock{font-size:210px;font-weight:300;letter-spacing:-4px;color:#4F4F4F;line-height:1}
 .nline{font-size:28px;color:#3D3D3D;margin-top:18px}
-.sleep .nclock{font-size:180px;color:#6A6A6A}
+.sleep .nclock{font-size:160px;color:#6A6A6A}
+.swx{margin-top:26px;text-align:center;max-width:900px}
+.swx-t{font-size:34px;color:#8A8A8A}
+.swx-t span{color:#666}
+.swx-w{font-size:46px;font-weight:600;color:#B0B0B0;margin-top:10px}
+.swx-tips{font-size:24px;color:#707070;margin-top:10px;line-height:1.35}
+.nwx{font-size:24px;color:#363636;margin-top:14px}
+.nrem{color:#6B3430;margin-top:8px}
 .sleep .nline{color:#555}
 .sig{margin-top:22px;text-align:center}
 .sig div{font-size:30px;color:#8A8A8A;margin-top:10px}
@@ -177,7 +202,7 @@ body.eve .badge{color:#1b1b1b}
   var PAIR = lsGet('home.pair') || String(100000 + Math.floor(Math.random() * 900000));
   lsSet('home.pair', PAIR);
   var U = { view: 'home', idle: 0, left: BACK_AFTER, sleep: false, awakeUntil: 0, offline: false,
-    busy: false, error: '', minute: -1, lastSync: 0, lastPair: 0 };
+    busy: false, error: '', minute: -1, lastSync: 0, lastPair: 0, tableError: false };
   var app = document.getElementById('app');
 
   function saveData() { lsSet('home.data', JSON.stringify(D)); }
@@ -198,6 +223,11 @@ body.eve .badge{color:#1b1b1b}
   function fmt(n) { return String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ' '); }
   function short(n) { return n >= 1000000 ? String(Math.round(n / 100000) / 10).replace('.', ',') + ' млн' : Math.round(n / 1000) + ' тыс'; }
 
+  function greeting(now) {
+    var h = now.getHours();
+    return h >= 5 && h < 12 ? 'Доброе утро' : h >= 12 && h < 18 ? 'Добрый день' : h >= 18 && h < 23 ? 'Добрый вечер' : 'Доброй ночи';
+  }
+
   function modeOf(now) {
     var h = now.getHours();
     var m = (h >= 23 || h < 6) ? 'night' : h >= 20 ? 'late' : h >= 18 ? 'eve' : 'day';
@@ -209,14 +239,23 @@ body.eve .badge{color:#1b1b1b}
   function isPaid(p, now) { return !!p.paid && p.paid.slice(0, 7) === ymd(now).slice(0, 7); }
   function dueDay(p, now) { return Math.min(p.day, new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()); }
   function daysTo(p, now) { return dueDay(p, now) - now.getDate(); }
+  function prevMonth(now) { return ymd(new Date(now.getFullYear(), now.getMonth() - 1, 1)).slice(0, 7); }
+  function prevMonthEnd(now) { return ymd(new Date(now.getFullYear(), now.getMonth(), 0)); }
+  // Последняя оплата была раньше прошлого месяца — значит, прошлый месяц не оплачен.
+  function overdue(p, now) {
+    return !!p.paid && p.paid.slice(0, 7) < prevMonth(now) && !isPaid(p, now) && !(p.debt > 0 && p.debtPaid >= p.debt);
+  }
+  function urgency(p, now) { return overdue(p, now) ? -99 : daysTo(p, now); }
   function level(p, now) {
     if (isPaid(p, now)) return 'paid';
+    if (overdue(p, now)) return 'red';
     var d = daysTo(p, now);
     if (d <= p.red) return 'red';
     if (d <= p.yel) return 'yel';
     return 'calm';
   }
   function dueWord(p, now) {
+    if (overdue(p, now)) return 'не оплачен за ' + MONTHS[(now.getMonth() + 11) % 12];
     var d = daysTo(p, now);
     if (d < 0) return 'просрочен на ' + days(-d);
     if (d === 0) return 'сегодня';
@@ -224,9 +263,11 @@ body.eve .badge{color:#1b1b1b}
     return 'через ' + days(d);
   }
   function dueTxt(p) { return 'до ' + p.day + '-го'; }
+  // Долг выплачен целиком и последний платёж был не в этом месяце — платёж больше не нужен.
+  function closed(p, now) { return p.debt > 0 && p.debtPaid >= p.debt && !isPaid(p, now); }
   function unpaid(now) {
-    return D.pays.filter(function (p) { return !isPaid(p, now); })
-      .sort(function (a, b) { return daysTo(a, now) - daysTo(b, now); });
+    return D.pays.filter(function (p) { return !isPaid(p, now) && !closed(p, now); })
+      .sort(function (a, b) { return urgency(a, now) - urgency(b, now); });
   }
   function redCount(now) {
     var n = 0, u = unpaid(now);
@@ -265,16 +306,42 @@ body.eve .badge{color:#1b1b1b}
     if (code <= 86) return 'снегопад';
     return 'гроза';
   }
-  function wxAdvice(w) {
-    var t = Math.min(w.t, w.tMin + 2), items = [];
-    if (t <= -10) items = ['тёплая куртка', 'шапка', 'перчатки'];
-    else if (t <= 0) items = ['тёплая куртка', 'шапка'];
-    else if (t <= 10) items = ['куртка'];
-    else if (t <= 17) items = ['лёгкая куртка'];
-    if (w.rain >= 50 || (w.code >= 51 && w.code <= 67) || (w.code >= 80 && w.code <= 82)) items.push('зонт');
-    if (!items.length) return 'Тепло, куртка не нужна';
-    if (items.length > 1) return 'Нужны ' + items.slice(0, -1).join(', ') + ' и ' + items[items.length - 1];
-    return (items[0] === 'зонт' ? 'Нужен ' : 'Нужна ') + items[0];
+  function wet(code) { return (code >= 51 && code <= 67) || (code >= 80 && code <= 82) || code >= 95; }
+  function snowy(code) { return (code >= 71 && code <= 77) || code === 85 || code === 86; }
+  function cap(t) { return t.charAt(0).toUpperCase() + t.slice(1); }
+
+  // Что надеть — по ощущаемой температуре и с учётом Алматы: большие перепады за день, зимний смог, гололёд, яркое солнце.
+  // o: feels, tMin, tMax, rain (%), code, uv, wind (м/с), aqi
+  function outfit(o) {
+    var f = o.feels, items, tips = [];
+    if (f <= -15) items = ['пуховик', 'шапка', 'шарф', 'перчатки'];
+    else if (f <= -5) items = ['пуховик', 'шапка', 'перчатки'];
+    else if (f <= 3) items = ['тёплая куртка', 'шапка'];
+    else if (f <= 10) items = ['куртка'];
+    else if (f <= 16) items = ['лёгкая куртка или худи'];
+    else if (f <= 24) items = ['футболка'];
+    else items = ['лёгкая одежда'];
+    var isWet = wet(o.code) || o.rain >= 50, isSnow = snowy(o.code);
+    if (isSnow) items.push('непромокаемая обувь');
+    else if (isWet) items.push('зонт');
+    var wear = items.length > 1 ? items.slice(0, -1).join(', ') + ' и ' + items[items.length - 1] : items[0];
+    if (o.tMax - o.tMin >= 10 && f > 3) tips.push('утром и вечером до ' + deg(o.tMin) + ' — возьмите кофту');
+    if (o.tMin <= 0 && o.tMax >= -2 && (isWet || isSnow)) tips.push('возможен гололёд');
+    if (f > 28) tips.push('жарко — панама и вода');
+    if (o.uv >= 6) tips.push('сильное солнце — очки и крем');
+    if (o.wind >= 10) tips.push('сильный ветер');
+    if (o.aqi > 150) tips.push('смог — лучше маска, окна не открывать');
+    else if (o.aqi > 100) tips.push('воздух так себе — лучше маска');
+    return { wear: cap(wear), tips: tips };
+  }
+  function outfitToday(w) {
+    return outfit({ feels: w.feels === undefined ? w.t : w.feels, tMin: w.tMin, tMax: w.tMax, rain: w.rain, code: w.code, uv: w.uv, wind: w.wind, aqi: w.aqi });
+  }
+  // Завтра: ориентируемся на утро — ближе к минимуму, когда выходят из дома.
+  function outfitTomorrow(w) {
+    if (w.tmrFeelsMin === undefined) return null;
+    return outfit({ feels: Math.round(w.tmrFeelsMin + (w.tmrFeelsMax - w.tmrFeelsMin) * 0.4), tMin: w.tmrMin, tMax: w.tmrMax,
+      rain: w.tmrRain, code: w.tmrCode, uv: w.tmrUv, wind: 0, aqi: null });
   }
   function deg(n) { return (n > 0 ? '+' : '') + n + '°'; }
   function aqiInfo(a) {
@@ -328,22 +395,23 @@ body.eve .badge{color:#1b1b1b}
     if (U.busy || !CFG.api || !CFG.key) return;
     U.busy = true;
     U.lastSync = Date.now();
-    var params = Q.length ? Q[0] : { action: 'data' };
-    api(params, function (err, res) {
+    var sent = Q.length ? Q[0] : null;   // что именно ушло: действие или запрос данных
+    api(sent || { action: 'data' }, function (err, res) {
       U.busy = false;
       if (err) { U.offline = true; render(); return; }
-      if (!res || !res.ok) {
-        if (res && res.error === 'bad key') { CFG.key = ''; lsSet('home.key', ''); U.error = 'key'; render(); return; }
-        if (Q.length) { Q.shift(); saveQ(); }   // сервер не принял действие — не застреваем на нём
-        U.offline = false;
-        if (Q.length) sync(); else { U.lastSync = 0; }
-        return;
-      }
+      if (res && res.error === 'bad key') { CFG.key = ''; lsSet('home.key', ''); U.error = 'key'; render(); return; }
       U.offline = false;
+      // Убираем из очереди только отправленное действие — даже если сервер его не принял, чтобы не застрять.
+      if (sent && Q[0] === sent) { Q.shift(); saveQ(); }
+      if (!res || !res.ok) {
+        if (sent) { sync(); return; }          // действие отклонено — отправляем остальное или берём свежие данные
+        U.tableError = true; render(); return; // таблица ответила ошибкой — повторим через минуту
+      }
+      U.tableError = false;
       U.error = '';
       lastOk = Date.now();
       lsSet('home.lastOk', String(lastOk));
-      if (Q.length) { Q.shift(); saveQ(); }
+      // Пока шёл запрос, могли нажать ещё что-то: сначала отправляем это, иначе старые данные затрут нажатие.
       if (Q.length) { sync(); return; }
       D = res.data;
       saveData();
@@ -371,8 +439,8 @@ body.eve .badge{color:#1b1b1b}
   };
 
   function offLabel() {
-    if (!U.offline) return '';
-    return '<div class="off">нет связи' + (lastOk ? ' · данные от ' + hm(new Date(lastOk)) : '') + '</div>';
+    if (!U.offline && !U.tableError) return '';
+    return '<div class="off">' + (U.offline ? 'нет связи' : 'таблица не отвечает') + (lastOk ? ' · данные от ' + hm(new Date(lastOk)) : '') + '</div>';
   }
 
   function topBar(now, mode) {
@@ -380,19 +448,20 @@ body.eve .badge{color:#1b1b1b}
     if (w) {
       var a = aqiInfo(w.aqi);
       var line1 = mode === 'day' ? deg(w.t) + ', ' + wxDesc(w.code) : deg(w.t) + ' сейчас';
-      var line2 = mode === 'day' ? wxAdvice(w) : 'Завтра ' + deg(w.tmrMax) + ', ' + wxDesc(w.tmrCode);
+      var line2 = mode === 'day' ? outfitToday(w).wear : 'Завтра ' + deg(w.tmrMax) + ', ' + wxDesc(w.tmrCode);
       wx = '<div class="wx"><div class="wx-t">' + line1 + '</div><div class="wx-s">' + line2 + '</div>' +
         (a ? '<div class="air"><i class="dot" style="background:' + a.c + '"></i>Воздух: ' + a.t + '</div>' : '') + '</div>';
     }
-    return '<div class="top"><div class="clock">' + hm(now) + '</div><div class="date"><b>' + WD[now.getDay()] + '</b><br>' +
-      now.getDate() + ' ' + MONTHS_G[now.getMonth()] + '</div>' + wx + '</div>';
+    return '<div class="top"><div class="clock">' + hm(now) + '</div><div class="date"><b>' + greeting(now) + '</b><br>' +
+      WD[now.getDay()] + ', ' + now.getDate() + ' ' + MONTHS_G[now.getMonth()] + '</div>' + wx + '</div>';
   }
 
   function taskRow(x, now, sm) {
     var done = isDone(x, now);
     var moved = !done && x.moved === ymd(now);
     return '<div role="button" class="task' + (sm ? ' sm' : '') + (done ? ' done' : '') + '" data-a="task" data-row="' + x.row + '" data-text="' + esc(x.text) + '">' +
-      '<span class="chk"></span><span class="tt">' + esc(x.text) + (moved ? '<span class="tag">завтра</span>' : '') + '</span></div>';
+      '<span class="chk"></span><span class="tt">' + esc(x.text) + (x.author ? ' <span class="who">· ' + esc(x.author) + '</span>' : '') +
+      (moved ? '<span class="tag">завтра</span>' : '') + '</span></div>';
   }
 
   function workPanel(now, mode) {
@@ -412,14 +481,14 @@ body.eve .badge{color:#1b1b1b}
       foot = '<div role="button" class="more" data-a="go" data-v="plan">' + (rest ? 'Ещё ' + rest + ' ' + plural(rest, 'задача', 'задачи', 'задач') : 'Весь план') +
         (inbox ? ' · ' + inbox + ' во входящих' : '') + '  →</div>';
     }
-    return '<section class="panel"><div class="ph"><span>Главное сегодня</span><span>' + (shown.length ? done + ' из ' + shown.length : '') + '</span></div>' + h + foot + '</section>';
+    return '<section class="panel kc k-plan"><div class="ph"><span>Главное сегодня</span><span>' + (shown.length ? done + ' из ' + shown.length : '') + '</span></div>' + h + foot + '</section>';
   }
 
   function homePanel(now) {
-    var h = '<section class="panel"><div class="ph"><span>Завтра и дома</span></div>', n = 0;
+    var h = '<section class="panel kc k-house"><div class="ph"><span>Завтра и дома</span></div>', n = 0;
     var u = unpaid(now);
     for (var i = 0; i < u.length && n < 2; i++) {
-      var d = daysTo(u[i], now);
+      var d = urgency(u[i], now);
       if (d <= 1) { h += '<div class="hrow"><small>' + (d <= 0 ? 'Срочно' : 'Завтра') + '</small><span>' + esc(u[i].name) + ', оплатить</span></div>'; n++; }
     }
     var shop = D.shop.filter(function (x) { return !isDone(x, now); }).length;
@@ -440,7 +509,7 @@ body.eve .badge{color:#1b1b1b}
   }
 
   function payPanel(now) {
-    var u = unpaid(now), h = '<section class="panel"><div class="ph"><span>Платежи</span><span>' + MONTHS[now.getMonth()] + '</span></div><div class="plist">';
+    var u = unpaid(now), h = '<section class="panel kc k-pay"><div class="ph"><span>Платежи</span><span>' + MONTHS[now.getMonth()] + '</span></div><div class="plist">';
     for (var i = 0; i < u.length && i < 3; i++) h += payCard(u[i], now);
     if (!u.length) h += '<div class="allok">Всё оплачено до конца месяца ✓</div>';
     else if (u.length < 3) h += '<div class="allok">Остальное оплачено ✓</div>';
@@ -456,7 +525,7 @@ body.eve .badge{color:#1b1b1b}
       var badge = '';
       if (b[i][0] === 'pay' && red) badge = '<span class="badge">' + red + '</span>';
       if (b[i][0] === 'dates' && soon >= 0) badge = '<span class="badge soft">' + (soon === 0 ? 'сегодня' : soon + ' дн') + '</span>';
-      h += '<div role="button" class="db" data-a="go" data-v="' + b[i][2] + '"><svg viewBox="0 0 24 24">' + ICONS[b[i][0]] + '</svg>' + b[i][1] + badge + '</div>';
+      h += '<div role="button" class="db k-' + b[i][0] + '" data-a="go" data-v="' + b[i][2] + '"><svg viewBox="0 0 24 24">' + ICONS[b[i][0]] + '</svg>' + b[i][1] + badge + '</div>';
     }
     return h + '</div>';
   }
@@ -471,7 +540,8 @@ body.eve .badge{color:#1b1b1b}
   }
 
   function paysView(now) {
-    var list = D.pays.slice().sort(function (a, b) { return a.day - b.day; }), i, p;
+    var list = D.pays.filter(function (x) { return !closed(x, now); }).sort(function (a, b) { return a.day - b.day; });
+    var debts = D.pays.filter(function (x) { return x.debt && x.amount; }), i, p;
     var h = subHead('Платежи') + '<div class="cols"><section class="panel wide"><div class="ph"><span>В этом месяце</span><span>' + MONTHS[now.getMonth()] +
       '</span></div><div class="plist' + (list.length > 5 ? ' compact' : '') + '">';
     for (i = 0; i < list.length; i++) {
@@ -487,13 +557,12 @@ body.eve .badge{color:#1b1b1b}
     if (!list.length) h += '<div class="empty">Платежей пока нет. Добавьте их в таблицу, лист «Платежи».</div>';
     h += '</div></section><section class="panel"><div class="ph"><span>Долги</span><span>сколько осталось</span></div>';
     var sum = 0, any = false;
-    for (i = 0; i < list.length; i++) {
-      p = list[i];
-      if (!p.debt || !p.amount) continue;
+    for (i = 0; i < debts.length; i++) {
+      p = debts[i];
       any = true;
       var rest = Math.max(0, p.debt - p.debtPaid);
       var nAll = Math.ceil(p.debt / p.amount), nPaid = Math.round(p.debtPaid / p.amount), nLeft = Math.ceil(rest / p.amount);
-      var start = now.getFullYear() * 12 + now.getMonth() + (isPaid(p, now) ? 1 : 0), end = start + nLeft - 1;
+      var start = now.getFullYear() * 12 + now.getMonth() + (isPaid(p, now) ? 1 : 0) - (overdue(p, now) ? 1 : 0), end = start + nLeft - 1;
       sum += rest;
       h += '<div class="debt"><div class="d-top"><span class="d-n">' + esc(p.name) + '</span><span class="d-left">' + (rest > 0 ? fmt(rest) + ' ₸' : 'закрыт ✓') + '</span></div>' +
         '<div class="dbar"><i style="width:' + Math.min(100, p.debtPaid / p.debt * 100).toFixed(1) + '%"></i></div>' +
@@ -510,7 +579,8 @@ body.eve .badge{color:#1b1b1b}
     var h = subHead('План на день') + '<div class="cols"><section class="panel wide"><div class="ph"><span>Главные</span><span>' + main.length + ' из 3</span></div>';
     for (i = 0; i < main.length; i++) h += taskRow(main[i], now, main.length > 3);
     if (!main.length) h += '<div class="empty">Нажмите «В главные» у задачи справа.</div>';
-    if (mode === 'eve') h += '<div role="button" class="move" data-a="move">Перенести несделанное на завтра</div>';
+    var open = main.concat(rest).filter(function (x) { return !isDone(x, now) && x.moved !== ymd(now); });
+    if (mode === 'eve' && open.length) h += '<div role="button" class="move" data-a="move">Перенести несделанное на завтра (' + open.length + ')</div>';
     h += '</section><section class="panel"><div class="ph"><span>Остальное</span></div>';
     for (i = 0; i < rest.length; i++) h += taskRow(rest[i], now, true);
     if (!rest.length) h += '<div class="empty">Пусто</div>';
@@ -535,7 +605,7 @@ body.eve .badge{color:#1b1b1b}
       }
       if (!ud.length) h += '<div class="empty">Дат пока нет</div>';
     } else {
-      var items = D[key].slice(0, 12);
+      var items = D[key].slice(0, 12), more = D[key].length - items.length;
       for (i = 0; i < items.length; i++) {
         h += '<div role="button" class="li' + (isDone(items[i], now) ? ' done' : '') + '" data-a="item" data-list="' + key + '" data-row="' + items[i].row + '" data-text="' + esc(items[i].text) +
           '"><span class="chk"></span><span class="tt">' + esc(items[i].text) + '</span></div>';
@@ -543,17 +613,22 @@ body.eve .badge{color:#1b1b1b}
       if (!items.length) h += '<div class="empty">Список пуст</div>';
     }
     return h + '</div><div class="hint">' + (key === 'dates' ? 'Даты добавляются в таблицу или через бота.' :
+      (more > 0 ? 'Не поместилось ещё ' + more + ' — отметьте эти, и появятся следующие. ' : '') +
       'Тап — ' + (key === 'shop' ? 'куплено' : 'сделано') + '. Новое добавляется в таблицу или через бота.') + '</div>';
   }
 
   function nightView(now) {
-    var u = unpaid(now), line = WD[now.getDay()] + ', ' + now.getDate() + ' ' + MONTHS_G[now.getMonth()];
-    var late = now.getHours() >= 23;
+    var u = unpaid(now), late = now.getHours() >= 23, remind = '';
     for (var i = 0; i < u.length; i++) {
-      var d = daysTo(u[i], now);
-      if (d <= (late ? 1 : 0)) { line = (late && d === 1 ? 'Завтра: ' : 'Не забыть: ') + esc(u[i].name) + ', до ' + u[i].day + '-го'; break; }
+      var d = urgency(u[i], now);
+      if (d <= (late ? 1 : 0)) { remind = (late && d === 1 ? 'Завтра: ' : 'Не забыть: ') + esc(u[i].name) + ', до ' + u[i].day + '-го'; break; }
     }
-    return '<div class="nt"><div class="nclock">' + hm(now) + '</div><div class="nline">' + line + '</div></div>';
+    var w = D.weather, tmr = w && outfitTomorrow(w);
+    return '<div class="nt"><div class="nclock">' + hm(now) + '</div>' +
+      '<div class="nline">Доброй ночи · ' + WD[now.getDay()].toLowerCase() + ', ' + now.getDate() + ' ' + MONTHS_G[now.getMonth()] + '</div>' +
+      (remind ? '<div class="nline nrem">' + remind + '</div>' : '') +
+      (tmr ? '<div class="nwx">Завтра ' + deg(w.tmrMin) + '…' + deg(w.tmrMax) + ', ' + wxDesc(w.tmrCode) + ' · ' + tmr.wear.toLowerCase() +
+        (tmr.tips.indexOf('возможен гололёд') >= 0 ? ' · возможен гололёд' : '') + '</div>' : '') + '</div>';
   }
 
   function sleepView(now) {
@@ -561,8 +636,16 @@ body.eve .badge{color:#1b1b1b}
     for (i = 0; i < u.length; i++) if (level(u[i], now) === 'red') sig += '<div><i class="dot" style="background:#B3261E;width:18px;height:18px"></i>' + esc(u[i].name) + ' — ' + dueWord(u[i], now) + '</div>';
     var ud = upcomingDates(now);
     if (ud.length && ud[0].days <= 1) sig += '<div>' + esc(ud[0].text) + ' — ' + whenWord(ud[0].days) + '</div>';
-    return '<div class="nt sleep"><div class="nclock">' + hm(now) + '</div><div class="nline">' + WD[now.getDay()] + ', ' + now.getDate() + ' ' + MONTHS_G[now.getMonth()] +
-      (w ? ' · ' + deg(w.t) : '') + '</div>' + (sig ? '<div class="sig">' + sig + '</div>' : '') + '</div><div class="nhint">Коснитесь экрана</div>';
+    var wx = '';
+    if (w) {
+      var o = outfitToday(w), a = aqiInfo(w.aqi);
+      wx = '<div class="swx"><div class="swx-t">' + deg(w.t) + ', ' + wxDesc(w.code) +
+        (w.feels !== undefined && w.feels !== w.t ? ' <span>· ощущается ' + deg(w.feels) + '</span>' : '') +
+        (a ? ' <i class="dot" style="background:' + a.c + '"></i>' : '') + '</div>' +
+        '<div class="swx-w">' + o.wear + '</div>' + (o.tips.length ? '<div class="swx-tips">' + cap(o.tips.join(' · ')) + '</div>' : '') + '</div>';
+    }
+    return '<div class="nt sleep"><div class="nclock">' + hm(now) + '</div><div class="nline">' + greeting(now) + ' · ' +
+      WD[now.getDay()].toLowerCase() + ', ' + now.getDate() + ' ' + MONTHS_G[now.getMonth()] + '</div>' + wx + (sig ? '<div class="sig">' + sig + '</div>' : '') + '</div><div class="nhint">Коснитесь экрана</div>';
   }
 
   function message(title, text) {
@@ -572,6 +655,7 @@ body.eve .badge{color:#1b1b1b}
   function render() {
     var now = new Date(), mode = modeOf(now), html;
     U.minute = now.getMinutes();
+    app.className = '';
     if (!CFG.key || U.error === 'key') {
       document.body.className = '';
       app.innerHTML = '<div class="msg"><b>Подключение планшета</b>Отправьте эти цифры боту ' + BOT_NAME + ' в Telegram:' +
@@ -592,6 +676,7 @@ body.eve .badge{color:#1b1b1b}
     document.body.className = mode === 'eve' || mode === 'late' ? 'eve' : '';
     if (U.view === 'plan' && mode === 'late') U.view = 'home';
     var v = U.view;
+    app.className = v === 'home' ? '' : 'kc k-' + ({ pays: 'pay', plan: 'plan', shop: 'shop', house: 'house', dates: 'dates' })[v];
     html = v === 'home' ? home(now, mode) : v === 'pays' ? paysView(now) : v === 'plan' ? planView(now, mode) : listView(v, now);
     app.innerHTML = html + offLabel();
   }
@@ -616,8 +701,13 @@ body.eve .badge{color:#1b1b1b}
     var now = new Date();
     U.idle = 0;
     U.left = BACK_AFTER;
-    if (U.sleep) { U.sleep = false; U.view = 'home'; render(); return; }
-    if (modeOf(now) === 'night') { U.awakeUntil = Date.now() + BACK_AFTER * 1000; U.view = 'home'; render(); return; }
+    if (U.sleep || modeOf(now) === 'night') {
+      U.sleep = false;
+      if (modeOf(now) === 'night') U.awakeUntil = Date.now() + BACK_AFTER * 1000;
+      U.view = 'home';
+      render();
+      return;
+    }
     if (U.awakeUntil) U.awakeUntil = Date.now() + BACK_AFTER * 1000;
 
     var el = e.target;
@@ -637,8 +727,8 @@ body.eve .badge{color:#1b1b1b}
       if (!x) return;
       act({ action: a, row: row, name: x.name }, function () {
         var was = isPaid(x, now);
-        if (a === 'pay' && !was) { x.paid = today; if (x.debt) x.debtPaid += x.amount; }
-        if (a === 'unpay' && was) { x.paid = ''; if (x.debt) x.debtPaid = Math.max(0, x.debtPaid - x.amount); }
+        if (a === 'pay' && !was) { x.paid = overdue(x, now) ? prevMonthEnd(now) : today; if (x.debt) x.debtPaid += x.amount; }
+        if (a === 'unpay' && was) { x.paid = prevMonthEnd(now); if (x.debt) x.debtPaid = Math.max(0, x.debtPaid - x.amount); }
       });
     } else if (a === 'task') {
       x = find(D.tasks, row);
@@ -661,6 +751,12 @@ body.eve .badge{color:#1b1b1b}
       act({ action: 'item', list: key, row: row, text: x.text }, function () { x.done = isDone(x, now) ? '' : today; });
     }
   });
+
+  // ---------- работа без интернета: Safari хранит страницу (home.appcache) ----------
+  var appCache = window.applicationCache, updateReady = false, lastCacheCheck = Date.now();
+  if (appCache) {
+    appCache.addEventListener('updateready', function () { updateReady = true; }, false);
+  }
 
   // ---------- часы, сон, обновления ----------
   setInterval(function () {
@@ -688,8 +784,20 @@ body.eve .badge{color:#1b1b1b}
       if (Date.now() - U.lastPair >= 5000) pairPoll();
       return;
     }
-    var wait = U.offline || !D ? 60 : SYNC_EVERY;
+    var wait = U.offline || U.tableError || !D ? 60 : SYNC_EVERY;
     if (Date.now() - U.lastSync >= wait * 1000) sync();
+
+    // Вышла новая версия страницы: перезагружаемся, когда экраном никто не пользуется.
+    // Очередь нажатий хранится на планшете и после перезагрузки отправится сама.
+    if (updateReady && U.view === 'home' && U.idle >= 20 && !U.busy) {
+      try { appCache.swapCache(); } catch (e) {}
+      location.reload();
+      return;
+    }
+    if (appCache && Date.now() - lastCacheCheck >= 3600000) {
+      lastCacheCheck = Date.now();
+      try { appCache.update(); } catch (e) {}
+    }
 
     // Ночью раз в сутки полностью перезагружаем страницу — только если связь есть.
     if (h === 3 && now.getMinutes() === 30 && lsGet('home.reloadDay') !== ymd(now) && !U.offline && Date.now() - lastOk < 15 * 60000 && !Q.length) {
