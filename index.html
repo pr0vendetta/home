@@ -181,6 +181,70 @@ body.eve .badge{color:#1b1b1b}
 .msg b{color:var(--fg);font-size:36px;margin-bottom:16px}
 .pair{font-size:120px;font-weight:700;letter-spacing:6px;color:var(--fg);margin:28px 0}
 </style>
+<script>
+// Старые iPad (Safari 7–9): нет CSS-переменных, а Flexbox понимают только с приставкой -webkit-.
+// Переписываем стили выше в понятный им вид: подставляем цвета дня, вечера (body.eve) и разделов (.k-…).
+// Каждое правило получает одинаковую добавку к весу (body… впереди и .k-… или :not(.kz) в первом звене),
+// чтобы правила спорили между собой как раньше.
+// На Safari 10+ ничего не делаем.
+(function () {
+  if (window.CSS && CSS.supports && CSS.supports('(--a:0)')) return;
+  var st = document.getElementsByTagName('style')[0];
+  var css = st.textContent.replace(/\/\*[\s\S]*?\*\//g, '');
+  var re = /([^{}]+)\{([^}]*)\}/g, m, rules = [], defs = {}, ks = [], i, j;
+  while ((m = re.exec(css))) {
+    var sel = m[1].trim(), own = null, decl = [], parts = m[2].split(';');
+    for (i = 0; i < parts.length; i++) {
+      var c = parts[i].indexOf(':');
+      if (c < 0) continue;
+      var p = parts[i].slice(0, c).trim(), v = parts[i].slice(c + 1).trim();
+      if (p.indexOf('--') === 0) (own = own || {})[p] = v; else decl.push([p, v]);
+    }
+    if (own) { defs[sel] = own; if (/^\.k-[a-z]+$/.test(sel)) ks.push(sel); }
+    if (decl.length) rules.push([sel, decl]);
+  }
+  function merge(a, b) { var o = {}, k; for (k in a) o[k] = a[k]; for (k in b) o[k] = b[k]; return o; }
+  function res(v, vars) { return v.replace(/var\((--[\w-]+)\)/g, function (s, n) { return vars[n] ? res(vars[n], vars) : ''; }); }
+  var themes = [['body:not(.eve)', defs[':root']], ['body.eve', merge(defs[':root'], defs['body.eve'])]];
+  var FX = /^(flex|flex-direction|flex-wrap|flex-grow|flex-shrink|flex-basis|align-items|align-content|align-self|justify-content|order)$/;
+  function out(sel, decl) {
+    var s = '';
+    for (var n = 0; n < decl.length; n++) {
+      var p = decl[n][0], v = decl[n][1];
+      if (p === 'display' && v === 'flex') s += 'display:-webkit-flex;';
+      else if (FX.test(p)) s += '-webkit-' + p + ':' + v + ';';
+      s += p + ':' + v + ';';
+    }
+    return sel + '{' + s + '}\n';
+  }
+  function fix(sel, add, theme) {
+    return sel.split(',').map(function (p) {
+      p = p.trim();
+      var n = p.search(/[\s>+~]/);
+      if (n < 0) n = p.length;
+      p = p.slice(0, n) + add + p.slice(n);
+      return /^html/.test(p) ? p : /^body/.test(p) ? theme + p.slice(4) : theme + ' ' + p;
+    }).join(',');
+  }
+  var res2 = '';
+  for (i = 0; i < rules.length; i++) {
+    var plain = [], withVar = [], d = rules[i][1];
+    for (j = 0; j < d.length; j++) (d[j][1].indexOf('var(') < 0 ? plain : withVar).push(d[j]);
+    if (plain.length) res2 += out(fix(rules[i][0], ':not(.kz)', 'body:not(.zz)'), plain);
+    if (!withVar.length) continue;
+    var useK = /var\(--kb?\)/.test(JSON.stringify(withVar));
+    for (var t = 0; t < themes.length; t++) {
+      var list = useK ? ks : [null];
+      for (var q = 0; q < list.length; q++) {
+        var vars = list[q] ? merge(themes[t][1], defs[list[q]]) : themes[t][1], rd = [];
+        for (j = 0; j < withVar.length; j++) rd.push([withVar[j][0], res(withVar[j][1], vars)]);
+        res2 += out(fix(rules[i][0], list[q] || ':not(.kz)', themes[t][0]), rd);
+      }
+    }
+  }
+  st.textContent = res2;
+})();
+</script>
 </head>
 <body>
 <div id="app"></div>
