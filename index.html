@@ -278,7 +278,7 @@ body.eve .badge{color:#1b1b1b}
   var lastOk = Number(lsGet('home.lastOk')) || 0;
   var PAIR = lsGet('home.pair') || String(100000 + Math.floor(Math.random() * 900000));
   lsSet('home.pair', PAIR);
-  var U = { view: 'home', idle: 0, left: BACK_AFTER, sleep: false, awakeUntil: 0, offline: false,
+  var U = { view: 'home', touched: Date.now(), left: BACK_AFTER, sleep: false, awakeUntil: 0, offline: false,
     busy: false, error: '', minute: -1, lastSync: 0, lastPair: 0, tableError: false };
   var app = document.getElementById('app');
 
@@ -771,6 +771,7 @@ body.eve .badge{color:#1b1b1b}
   var pressed = null;
   function release() { if (pressed) { pressed.className = pressed.className.replace(/ ?pressed/g, ''); pressed = null; } }
   app.addEventListener('touchstart', function (e) {
+    U.touched = Date.now(); // любое касание, даже свайп без «нажатия», откладывает сон
     release();
     var el = e.target;
     while (el && el !== app && !(el.getAttribute && el.getAttribute('data-a'))) el = el.parentNode;
@@ -782,7 +783,7 @@ body.eve .badge{color:#1b1b1b}
 
   app.addEventListener('click', function (e) {
     var now = new Date();
-    U.idle = 0;
+    U.touched = Date.now();
     U.left = BACK_AFTER;
     if (U.sleep || modeOf(now) === 'night') {
       U.sleep = false;
@@ -844,7 +845,7 @@ body.eve .badge{color:#1b1b1b}
   // ---------- часы, сон, обновления ----------
   setInterval(function () {
     var now = new Date(), mode = modeOf(now), h = now.getHours();
-    U.idle++;
+    var idle = (Date.now() - U.touched) / 1000; // секунд с последнего касания — по часам, а не по тикам таймера (iPad их притормаживает)
 
     if (U.awakeUntil && Date.now() >= U.awakeUntil) { U.awakeUntil = 0; U.view = 'home'; render(); return; }
 
@@ -856,10 +857,10 @@ body.eve .badge{color:#1b1b1b}
     }
 
     var morning = h >= WAKE_FROM && h < WAKE_TO;
-    if (!U.sleep && mode !== 'night' && !U.awakeUntil && !morning && U.idle >= SLEEP_AFTER) {
+    if (!U.sleep && mode !== 'night' && !U.awakeUntil && !morning && idle >= SLEEP_AFTER) {
       U.sleep = true; U.view = 'home'; render(); return;
     }
-    if (U.sleep && morning) { U.sleep = false; U.idle = 0; render(); return; }
+    if (U.sleep && morning) { U.sleep = false; U.touched = Date.now(); render(); return; }
 
     if (now.getMinutes() !== U.minute) render();
 
@@ -872,7 +873,7 @@ body.eve .badge{color:#1b1b1b}
 
     // Вышла новая версия страницы: перезагружаемся, когда экраном никто не пользуется.
     // Очередь нажатий хранится на планшете и после перезагрузки отправится сама.
-    if (updateReady && U.view === 'home' && U.idle >= 20 && !U.busy) {
+    if (updateReady && U.view === 'home' && idle >= 20 && !U.busy) {
       try { appCache.swapCache(); } catch (e) {}
       location.reload();
       return;
