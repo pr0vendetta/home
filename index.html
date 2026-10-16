@@ -55,6 +55,10 @@ body.dark{background:#000;color:#5C5C5C}
 .date{font-size:26px;color:var(--muted);line-height:1.25}
 .date b{color:var(--fg);font-weight:600}
 .top .wx{margin-left:auto;text-align:right}
+.rf{flex:none;width:84px;height:84px;border-radius:18px;background:var(--btn);display:flex;align-items:center;justify-content:center}
+.top .date + .rf{margin-left:auto}
+.rf svg{width:44px;height:44px;fill:none;stroke:var(--acc);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.rf.busy{opacity:.35}
 .wx-t{font-size:28px;font-weight:600}
 .wx-s{font-size:28px}
 .air{font-size:21px;color:var(--muted);margin-top:4px}
@@ -254,7 +258,7 @@ body.eve .badge{color:#1b1b1b}
 
   var SLEEP_AFTER = 30;    // секунд без касаний до спящего экрана
   var BACK_AFTER = 60;     // секунд до возврата на главный
-  var SYNC_EVERY = 300;    // секунд между обновлениями
+  var SYNC_EVERY = 60;     // секунд между обновлениями данных из таблицы
   var WAKE_FROM = 7, WAKE_TO = 9; // утром не засыпает
   // Адрес веб-приложения Apps Script. Без ключа по нему ничего не прочитать — ключ планшет получает через бота.
   var API_URL = 'https://script.google.com/macros/s/AKfycbzY9nBCwkXaLCX7Xo0dfAQJLNn4a1Pmg3mfothvs49GzvkOQJt6ovqWzW4jKDuxcAuF/exec';
@@ -279,7 +283,7 @@ body.eve .badge{color:#1b1b1b}
   var PAIR = lsGet('home.pair') || String(100000 + Math.floor(Math.random() * 900000));
   lsSet('home.pair', PAIR);
   var U = { view: 'home', touched: Date.now(), left: BACK_AFTER, sleep: false, awakeUntil: 0, offline: false,
-    busy: false, error: '', minute: -1, lastSync: 0, lastPair: 0, tableError: false };
+    busy: false, refreshAt: 0, error: '', minute: -1, lastSync: 0, lastPair: 0, tableError: false };
   var app = document.getElementById('app');
 
   function saveData() { lsSet('home.data', JSON.stringify(D)); }
@@ -525,7 +529,8 @@ body.eve .badge{color:#1b1b1b}
         (a ? '<div class="air"><i class="dot" style="background:' + a.c + '"></i>Воздух: ' + a.t + '</div>' : '') + '</div>';
     }
     return '<div class="top"><div class="clock">' + hm(now) + '</div><div class="date"><b>' + greeting(now) + '</b><br>' +
-      WD[now.getDay()] + ', ' + now.getDate() + ' ' + MONTHS_G[now.getMonth()] + '</div>' + wx + '</div>';
+      WD[now.getDay()] + ', ' + now.getDate() + ' ' + MONTHS_G[now.getMonth()] + '</div>' + wx +
+      '<div role="button" class="rf' + (Date.now() - U.refreshAt < 2000 ? ' busy' : '') + '" data-a="refresh"><svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.7M20 4v5h-5"/></svg></div></div>';
   }
 
   function taskRow(x, now, sm) {
@@ -790,6 +795,7 @@ body.eve .badge{color:#1b1b1b}
       if (modeOf(now) === 'night') U.awakeUntil = Date.now() + BACK_AFTER * 1000;
       U.view = 'home';
       render();
+      if (Date.now() - U.lastSync >= 30000) sync(); // проснулся — сразу свежие данные
       return;
     }
     if (U.awakeUntil) U.awakeUntil = Date.now() + BACK_AFTER * 1000;
@@ -804,6 +810,17 @@ body.eve .badge{color:#1b1b1b}
     var a = el.getAttribute('data-a'), row = el.getAttribute('data-row'), today = ymd(now), x;
 
     if (a === 'go') { U.view = el.getAttribute('data-v'); render(); return; }
+    // Кнопка «обновить»: свежие данные из таблицы и проверка новой версии страницы.
+    if (a === 'refresh') {
+      if (updateReady) { try { appCache.swapCache(); } catch (e) {} location.reload(); return; }
+      U.refreshAt = Date.now();
+      render();
+      setTimeout(render, 2000);
+      lastCacheCheck = Date.now();
+      try { if (appCache) appCache.update(); } catch (e) {}
+      sync();
+      return;
+    }
     if (!D) return;
 
     if (a === 'pay' || a === 'unpay') {
@@ -839,7 +856,11 @@ body.eve .badge{color:#1b1b1b}
   // ---------- работа без интернета: Safari хранит страницу (home.appcache) ----------
   var appCache = window.applicationCache, updateReady = false, lastCacheCheck = Date.now();
   if (appCache) {
-    appCache.addEventListener('updateready', function () { updateReady = true; }, false);
+    appCache.addEventListener('updateready', function () {
+      updateReady = true;
+      // Новую версию нашла кнопка «обновить» — перезагружаемся сразу, не дожидаясь паузы.
+      if (Date.now() - U.refreshAt < 30000) { try { appCache.swapCache(); } catch (e) {} location.reload(); }
+    }, false);
   }
 
   // ---------- часы, сон, обновления ----------
@@ -878,7 +899,7 @@ body.eve .badge{color:#1b1b1b}
       location.reload();
       return;
     }
-    if (appCache && Date.now() - lastCacheCheck >= 3600000) {
+    if (appCache && Date.now() - lastCacheCheck >= 600000) {
       lastCacheCheck = Date.now();
       try { appCache.update(); } catch (e) {}
     }
