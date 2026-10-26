@@ -151,7 +151,7 @@ body.eve .badge{color:#1b1b1b}
 .acc:last-child{border-bottom:0}
 .acc-tx{flex:1;min-width:0;margin-right:16px}
 .acc-n{font-size:28px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.acc-s{font-size:19px;color:var(--muted);margin-top:4px}
+.acc-s{font-size:19px;color:var(--muted);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .acc-s.old{color:var(--yel);font-weight:700}
 .acc-v{flex:none;text-align:right}
 .acc-a{font-size:30px;font-weight:700;white-space:nowrap}
@@ -163,6 +163,36 @@ body.eve .badge{color:#1b1b1b}
 .tot{font-size:54px;font-weight:800;letter-spacing:-1px;margin:4px 0 10px;flex:none}
 .grp{display:flex;justify-content:space-between;align-items:baseline;padding:7px 0;font-size:23px;color:var(--muted);flex:none}
 .grp b{color:var(--fg);font-weight:700}
+/* Цели: кольцо — сколько уже накоплено, справа — сколько осталось и сколько откладывать в месяц. */
+.goals > * + *{margin-top:12px}
+.goal{display:flex;align-items:center;padding:14px 18px 14px 14px;border-radius:16px;background:var(--bg)}
+.ring{flex:none;position:relative;width:100px;height:100px;margin-right:18px}
+.ring svg{display:block;width:100px;height:100px}
+.ring circle{fill:none;stroke-width:10}
+.ring .rt{stroke:var(--line)}
+.kc .ring .rp{stroke:var(--k);stroke-linecap:round}
+.gdone .ring .rp{stroke:var(--ok)}
+.ring span{position:absolute;left:0;right:0;top:50%;margin-top:-15px;line-height:30px;text-align:center;font-size:22px;font-weight:800}
+.g-tx{flex:1;min-width:0}
+.g-n{font-size:28px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.g-a{font-size:21px;color:var(--muted);margin-top:4px}
+.g-a b{color:var(--fg);font-size:26px}
+.g-s{font-size:19px;color:var(--muted);margin-top:4px;line-height:1.35}
+.g-s b{color:var(--fg)}
+.kc .g-m{color:var(--k);font-weight:700}
+.g-ok{color:var(--ok);font-weight:700}
+.g-p{font-size:17px;color:var(--muted);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.goals.tight > * + *{margin-top:8px}
+.goals.tight .goal{padding:8px 14px 8px 10px}
+.goals.tight .ring,.goals.tight .ring svg{width:74px;height:74px}
+.goals.tight .ring{margin-right:14px}
+.goals.tight .ring span{font-size:20px}
+.goals.tight .g-n{font-size:23px}
+.goals.tight .g-a b{font-size:22px}
+.goals.tight .g-p{display:none}
+.foot.nm{margin-top:0;padding-top:6px}
+/* Знак тенге картинкой — в шрифтах iOS 7–9 его нет. */
+.tg{display:inline-block;width:.6em;height:.78em;fill:currentColor;vertical-align:-.03em}
 .pages{position:absolute;bottom:4px;left:0;right:0;text-align:center;line-height:0}
 .pages i{display:inline-block;width:10px;height:10px;border-radius:5px;background:var(--line);margin:0 6px}
 .pages i.on{background:var(--muted)}
@@ -646,11 +676,42 @@ body.eve .badge{color:#1b1b1b}
     return Math.round((new Date(now.getFullYear(), now.getMonth(), now.getDate()) - new Date(+s.slice(0, 4), +s.slice(5, 7) - 1, +s.slice(8))) / 864e5);
   }
 
+  // На iOS до 10 в шрифтах нет знака ₸ — рисуем его сами.
+  var OLD_IOS = (function () { var m = /OS (\d+)_\d+(_\d+)? like Mac/.exec(navigator.userAgent); return !!m && +m[1] < 10; })();
+  var TG_SVG = '<svg class="tg" viewBox="0 0 10 13"><path d="M0 0h10v1.7H0zM0 3.4h10v1.7H5.85V13h-1.7V5.1H0z"/></svg>';
+  function tenge(html) { return OLD_IOS ? html.replace(/₸/g, TG_SVG) : html; }
+
+  // Коротко для больших сумм: 7,2 млн · 650 тыс.
+  function shortM(n) {
+    n = Math.round(n);
+    if (Math.abs(n) >= 1e6) return String(Math.round(n / 1e5) / 10).replace('.', ',') + ' млн';
+    if (Math.abs(n) >= 1e4) return Math.round(n / 1e3) + ' тыс';
+    return fmt(n);
+  }
+
+  function goalCard(g, now) {
+    var p = Math.max(0, Math.min(1, g.saved / g.target)), left = g.target - g.saved, C = 263.9, s;
+    if (left <= 0) s = '<span class="g-ok">Цель достигнута ✓</span>';
+    else {
+      s = 'осталось <b>' + shortM(left) + ' ₸</b>';
+      if (g.due) {
+        var m = +g.due.slice(0, 4) * 12 + +g.due.slice(5, 7) - (now.getFullYear() * 12 + now.getMonth() + 1), dd = +g.due.slice(8);
+        s += ' · до ' + (dd > 1 ? dd + ' ' : '') + MONTHS_G[+g.due.slice(5, 7) - 1] + ' ' + g.due.slice(0, 4) +
+          '<div class="g-m">' + (m > 0 ? '≈ ' + shortM(left / m) + ' ₸ в месяц' : m === 0 ? 'срок — в этом месяце' : 'срок прошёл') + '</div>';
+      }
+    }
+    return '<div class="goal' + (left <= 0 ? ' gdone' : '') + '"><div class="ring"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="42" class="rt"/>' +
+      (p > 0 ? '<circle cx="50" cy="50" r="42" class="rp" stroke-dasharray="' + (C * p).toFixed(1) + ' ' + C + '" transform="rotate(-90 50 50)"/>' : '') +
+      '</svg><span>' + Math.floor(p * 100) + '%</span></div><div class="g-tx"><div class="g-n">' + esc(g.name) + '</div>' +
+      '<div class="g-a"><b>' + shortM(g.saved) + '</b> из ' + shortM(g.target) + ' ₸</div><div class="g-s">' + s + '</div>' +
+      (g.parts.length ? '<div class="g-p">' + g.parts.map(esc).join(' · ') + '</div>' : '') + '</div></div>';
+  }
+
   function moneyView(now) {
     var list = (D.accounts || []).slice().sort(function (a, b) { return ACC_ORDER.indexOf(a.type) - ACC_ORDER.indexOf(b.type); });
-    var rates = D.rates || {}, total = 0, by = {}, nBy = 0, noRate = 0, goals = '', i, x;
-    var h = subHead('Счета') + '<div class="cols"><section class="panel wide"><div class="ph"><span>Счета</span><span>' + (list.length || '') + '</span></div>' +
-      '<div' + (list.length > 6 ? ' class="tight"' : '') + '>';
+    var gl = D.goals || [], rates = D.rates || {}, total = 0, by = {}, nBy = 0, noRate = 0, i, x;
+    var h = subHead('Счета') + '<div class="cols"><section class="panel' + (gl.length ? '' : ' wide') + '"><div class="ph"><span>Счета</span><span>' + (list.length || '') + '</span></div>' +
+      '<div' + (list.length > (gl.length ? 4 : 6) ? ' class="tight"' : '') + '>';
     for (i = 0; i < list.length; i++) {
       x = list[i];
       var ago = x.upd ? daysAgo(x.upd, now) : -1, old = ago < 0 || ago > 35;
@@ -661,20 +722,22 @@ body.eve .badge{color:#1b1b1b}
         (x.cur !== 'KZT' ? '<div class="acc-k">' + (x.kzt !== null ? '≈ ' + money(x.kzt, 'KZT') : 'нет курса') + '</div>' : '') + '</div></div>';
       if (x.kzt === null) noRate++;
       else { if (!(x.type in by)) { by[x.type] = 0; nBy++; } by[x.type] += x.kzt; total += x.kzt; }
-      if (x.goal > 0) {
-        goals += '<div class="debt"><div class="d-top"><span class="d-n">' + esc(x.name) + '</span><span class="d-left">' + Math.floor(Math.min(100, x.amount / x.goal * 100)) + '%</span></div>' +
-          '<div class="dbar"><i style="width:' + Math.min(100, x.amount / x.goal * 100).toFixed(1) + '%"></i></div>' +
-          '<div class="d-s">' + money(x.amount, x.cur) + ' из ' + money(x.goal, x.cur) + (x.goal > x.amount ? ' · осталось <b>' + money(x.goal - x.amount, x.cur) + '</b>' : ' · цель достигнута ✓') + '</div></div>';
-      }
     }
     if (!list.length) h += '<div class="empty">Счетов пока нет. Добавьте их через бота: кнопка «💰 Счета» → «Добавить счёт».</div>';
-    h += '</div></section><section class="panel"><div class="ph"><span>Всего</span><span>в тенге</span></div><div class="tot">' + money(total, 'KZT') + '</div>';
-    if (nBy > 1) for (i = 0; i < ACC_ORDER.length; i++) if (ACC_ORDER[i] in by) h += '<div class="grp"><span>' + ACC_G[ACC_ORDER[i]] + '</span><b>' + money(by[ACC_ORDER[i]], 'KZT') + '</b></div>';
-    h += goals;
     var rl = [];
     for (var c in rates) rl.push('1 ' + (SIGN[c] || c) + ' = ' + String(Math.round(rates[c] * 100) / 100).replace('.', ',') + ' ₸');
-    return h + '<div class="foot">' + (rl.length ? 'Курс: ' + rl.join(' · ') + '<br>' : '') + (noRate ? 'Без курса, не в сумме: ' + noRate + '<br>' : '') +
-      'Суммы меняются в боте: «💰 Счета»</div></section></div>' + pages(1);
+    var rates_ = (rl.length ? 'Курс: ' + rl.join(' · ') + '<br>' : '') + (noRate ? 'Без курса, не в сумме: ' + noRate + '<br>' : '');
+    if (gl.length) {
+      // Есть цели: справа карточки целей, общая сумма — внизу под счетами.
+      h += '</div><div class="d-total"><span>Всего</span><b>' + money(total, 'KZT') + '</b></div><div class="foot nm">' + rates_ +
+        'Меняются в боте: «💰 Счета»</div></section><section class="panel wide"><div class="ph"><span>Цели</span><span>' + gl.length + '</span></div>' +
+        '<div class="goals' + (gl.length > 3 ? ' tight' : '') + '">';
+      for (i = 0; i < gl.length; i++) h += goalCard(gl[i], now);
+      return h + '</div></section></div>' + pages(1);
+    }
+    h += '</div></section><section class="panel"><div class="ph"><span>Всего</span><span>в тенге</span></div><div class="tot">' + money(total, 'KZT') + '</div>';
+    if (nBy > 1) for (i = 0; i < ACC_ORDER.length; i++) if (ACC_ORDER[i] in by) h += '<div class="grp"><span>' + ACC_G[ACC_ORDER[i]] + '</span><b>' + money(by[ACC_ORDER[i]], 'KZT') + '</b></div>';
+    return h + '<div class="foot">' + rates_ + 'Суммы меняются в боте: «💰 Счета»<br>Цели (квартира, поездка) — там же: «🎯 Цели»</div></section></div>' + pages(1);
   }
 
   // Перелистывание: экран едет за пальцем (x в px), t — длительность анимации в секундах (0 — сразу).
@@ -832,7 +895,7 @@ body.eve .badge{color:#1b1b1b}
     if (mode === 'night' || U.sleep) {
       document.body.className = 'dark';
       html = U.sleep && mode !== 'night' ? sleepView(now) : nightView(now);
-      app.innerHTML = html + offLabel();
+      app.innerHTML = tenge(html) + offLabel();
       return;
     }
     document.body.className = mode === 'eve' || mode === 'late' ? 'eve' : '';
@@ -840,7 +903,7 @@ body.eve .badge{color:#1b1b1b}
     var v = U.view;
     app.className = v === 'home' ? '' : 'kc k-' + ({ pays: 'pay', plan: 'plan', shop: 'shop', house: 'house', dates: 'dates', money: 'money' })[v];
     html = v === 'home' ? home(now, mode) : v === 'pays' ? paysView(now) : v === 'plan' ? planView(now, mode) : v === 'money' ? moneyView(now) : listView(v, now);
-    app.innerHTML = html + offLabel();
+    app.innerHTML = tenge(html) + offLabel();
   }
 
   // ---------- касания ----------
