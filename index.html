@@ -15,14 +15,14 @@
   --red:#B3261E; --red-bg:#FCE3E0; --yel:#7A5600; --yel-bg:#FFEBB0; --ok:#2C7A3F; --ok-bg:#DCF0E1;
   --btn:#FFFFFF; --acc:#1D6A86;
   --c-pay:#2F6FDB; --c-pay-bg:#E3ECFB; --c-plan:#7A4FD8; --c-plan-bg:#EEE8FB; --c-shop:#C2570A; --c-shop-bg:#FCEBDB;
-  --c-house:#0F8A86; --c-house-bg:#DCF1EF; --c-dates:#C23B7A; --c-dates-bg:#F8E2EC;
+  --c-house:#0F8A86; --c-house-bg:#DCF1EF; --c-dates:#C23B7A; --c-dates-bg:#F8E2EC; --c-money:#2E7D4F; --c-money-bg:#DDF0E3;
 }
 body.eve{
   --bg:#151A20; --panel:#212830; --fg:#F1F4F6; --muted:#A3ADB7; --line:#333C46;
   --red:#FF8F86; --red-bg:#4B2522; --yel:#FFD666; --yel-bg:#443819; --ok:#83D69D; --ok-bg:#1E3828;
   --btn:#29313A; --acc:#6CC0DD;
   --c-pay:#7AA8FF; --c-pay-bg:#1F2C45; --c-plan:#B096FF; --c-plan-bg:#2B2445; --c-shop:#FFA65A; --c-shop-bg:#3C2A18;
-  --c-house:#5CCFC6; --c-house-bg:#173533; --c-dates:#F383B5; --c-dates-bg:#3B1F2D;
+  --c-house:#5CCFC6; --c-house-bg:#173533; --c-dates:#F383B5; --c-dates-bg:#3B1F2D; --c-money:#7FD39B; --c-money-bg:#1B3526;
 }
 html,body{height:100%;margin:0}
 body{background:var(--bg);color:var(--fg);font-family:-apple-system,"Helvetica Neue",Helvetica,Arial,sans-serif;line-height:1.2;
@@ -42,6 +42,7 @@ body.dark{background:#000;color:#5C5C5C}
 .k-shop{--k:var(--c-shop);--kb:var(--c-shop-bg)}
 .k-house{--k:var(--c-house);--kb:var(--c-house-bg)}
 .k-dates{--k:var(--c-dates);--kb:var(--c-dates-bg)}
+.k-money{--k:var(--c-money);--kb:var(--c-money-bg)}
 .kc .ph,.kc .sub-t{color:var(--k)}
 .kc .back{background:var(--kb);color:var(--k)}
 .kc .sub-h{border-bottom:4px solid var(--k);padding-bottom:12px;height:100px}
@@ -144,6 +145,27 @@ body.eve .badge{color:#1b1b1b}
 .ib{display:flex;align-items:center;min-height:72px;border-bottom:1px solid var(--line);font-size:24px}
 .ib span{flex:1;min-width:0;margin-right:14px}
 .ib [role="button"]{flex:none;height:56px;padding:0 14px;border:2px solid var(--line);border-radius:12px;background:var(--panel);font-size:19px;font-weight:700;color:var(--acc)}
+
+/* Второй экран (свайп влево с главного): счета и сколько всего. */
+.acc{display:flex;align-items:center;min-height:86px;padding:10px 0;border-bottom:1px solid var(--line);flex:none}
+.acc:last-child{border-bottom:0}
+.acc-tx{flex:1;min-width:0;margin-right:16px}
+.acc-n{font-size:28px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.acc-s{font-size:19px;color:var(--muted);margin-top:4px}
+.acc-s.old{color:var(--yel);font-weight:700}
+.acc-v{flex:none;text-align:right}
+.acc-a{font-size:30px;font-weight:700;white-space:nowrap}
+.acc-k{font-size:19px;color:var(--muted);margin-top:3px;white-space:nowrap}
+.tight .acc{min-height:62px;padding:5px 0}
+.tight .acc-n{font-size:23px}
+.tight .acc-a{font-size:24px}
+.tight .acc-s,.tight .acc-k{font-size:16px;margin-top:2px}
+.tot{font-size:54px;font-weight:800;letter-spacing:-1px;margin:4px 0 10px;flex:none}
+.grp{display:flex;justify-content:space-between;align-items:baseline;padding:7px 0;font-size:23px;color:var(--muted);flex:none}
+.grp b{color:var(--fg);font-weight:700}
+.pages{position:absolute;bottom:4px;left:0;right:0;text-align:center;line-height:0}
+.pages i{display:inline-block;width:10px;height:10px;border-radius:5px;background:var(--line);margin:0 6px}
+.pages i.on{background:var(--muted)}
 
 .lst{flex:1;display:flex;flex-wrap:wrap;align-content:flex-start;justify-content:space-between;overflow:hidden}
 .li{width:49.3%;min-height:86px;display:flex;align-items:center;padding:0 22px;border-radius:16px;background:var(--panel);font-size:30px;text-align:left;margin-bottom:12px}
@@ -608,7 +630,64 @@ body.eve .badge{color:#1b1b1b}
   }
 
   function home(now, mode) {
-    return topBar(now, mode) + '<div class="mid">' + (mode === 'late' ? homePanel(now) : workPanel(now, mode)) + payPanel(now) + '</div>' + dock(now, mode);
+    return topBar(now, mode) + '<div class="mid">' + (mode === 'late' ? homePanel(now) : workPanel(now, mode)) + payPanel(now) + '</div>' + dock(now, mode) + pages(0);
+  }
+
+  // Точки внизу: главный экран и второй (счета), листаются свайпом.
+  function pages(n) { return '<div class="pages"><i' + (n === 0 ? ' class="on"' : '') + '></i><i' + (n === 1 ? ' class="on"' : '') + '></i></div>'; }
+
+  // ---------- счета ----------
+  var ACC_T = { otbasy: 'Отбасы', deposit: 'Депозит', broker: 'Брокерский', fx: 'Валютный', other: 'Другое' };
+  var ACC_G = { otbasy: 'Отбасы', deposit: 'Депозиты', broker: 'Брокерские', fx: 'Валюта', other: 'Другое' };
+  var ACC_ORDER = ['otbasy', 'deposit', 'broker', 'fx', 'other'];
+  var SIGN = { KZT: '₸', USD: '$', EUR: '€', RUB: '₽', CNY: '¥' };
+  function money(n, cur) { return fmt(n) + ' ' + (SIGN[cur] || cur); }
+  function daysAgo(s, now) {
+    return Math.round((new Date(now.getFullYear(), now.getMonth(), now.getDate()) - new Date(+s.slice(0, 4), +s.slice(5, 7) - 1, +s.slice(8))) / 864e5);
+  }
+
+  function moneyView(now) {
+    var list = (D.accounts || []).slice().sort(function (a, b) { return ACC_ORDER.indexOf(a.type) - ACC_ORDER.indexOf(b.type); });
+    var rates = D.rates || {}, total = 0, by = {}, nBy = 0, noRate = 0, goals = '', i, x;
+    var h = subHead('Счета') + '<div class="cols"><section class="panel wide"><div class="ph"><span>Счета</span><span>' + (list.length || '') + '</span></div>' +
+      '<div' + (list.length > 6 ? ' class="tight"' : '') + '>';
+    for (i = 0; i < list.length; i++) {
+      x = list[i];
+      var ago = x.upd ? daysAgo(x.upd, now) : -1, old = ago < 0 || ago > 35;
+      h += '<div class="acc"><div class="acc-tx"><div class="acc-n">' + esc(x.name) + '</div><div class="acc-s' + (old ? ' old' : '') + '">' +
+        (x.name.toLowerCase().indexOf(ACC_T[x.type].toLowerCase()) < 0 ? ACC_T[x.type] + ' · ' : '') +
+        (old ? 'давно не обновляли' : ago === 0 ? 'обновлено сегодня' : 'обновлено ' + Number(x.upd.slice(8)) + ' ' + MONTHS_G[Number(x.upd.slice(5, 7)) - 1]) +
+        (x.note ? ' · ' + esc(x.note) : '') + '</div></div><div class="acc-v"><div class="acc-a">' + money(x.amount, x.cur) + '</div>' +
+        (x.cur !== 'KZT' ? '<div class="acc-k">' + (x.kzt !== null ? '≈ ' + money(x.kzt, 'KZT') : 'нет курса') + '</div>' : '') + '</div></div>';
+      if (x.kzt === null) noRate++;
+      else { if (!(x.type in by)) { by[x.type] = 0; nBy++; } by[x.type] += x.kzt; total += x.kzt; }
+      if (x.goal > 0) {
+        goals += '<div class="debt"><div class="d-top"><span class="d-n">' + esc(x.name) + '</span><span class="d-left">' + Math.floor(Math.min(100, x.amount / x.goal * 100)) + '%</span></div>' +
+          '<div class="dbar"><i style="width:' + Math.min(100, x.amount / x.goal * 100).toFixed(1) + '%"></i></div>' +
+          '<div class="d-s">' + money(x.amount, x.cur) + ' из ' + money(x.goal, x.cur) + (x.goal > x.amount ? ' · осталось <b>' + money(x.goal - x.amount, x.cur) + '</b>' : ' · цель достигнута ✓') + '</div></div>';
+      }
+    }
+    if (!list.length) h += '<div class="empty">Счетов пока нет. Добавьте их через бота: кнопка «💰 Счета» → «Добавить счёт».</div>';
+    h += '</div></section><section class="panel"><div class="ph"><span>Всего</span><span>в тенге</span></div><div class="tot">' + money(total, 'KZT') + '</div>';
+    if (nBy > 1) for (i = 0; i < ACC_ORDER.length; i++) if (ACC_ORDER[i] in by) h += '<div class="grp"><span>' + ACC_G[ACC_ORDER[i]] + '</span><b>' + money(by[ACC_ORDER[i]], 'KZT') + '</b></div>';
+    h += goals;
+    var rl = [];
+    for (var c in rates) rl.push('1 ' + (SIGN[c] || c) + ' = ' + String(Math.round(rates[c] * 100) / 100).replace('.', ',') + ' ₸');
+    return h + '<div class="foot">' + (rl.length ? 'Курс: ' + rl.join(' · ') + '<br>' : '') + (noRate ? 'Без курса, не в сумме: ' + noRate + '<br>' : '') +
+      'Суммы меняются в боте: «💰 Счета»</div></section></div>' + pages(1);
+  }
+
+  // Перелистывание: экран въезжает сбоку (dir 1 — справа, -1 — слева).
+  function slide(dir) {
+    var s = app.style;
+    s.webkitTransition = s.transition = 'none';
+    s.webkitTransform = s.transform = 'translateX(' + dir * 90 + 'px)';
+    s.opacity = '0.2';
+    void app.offsetWidth;
+    s.webkitTransition = '-webkit-transform .25s ease-out, opacity .25s ease-out';
+    s.transition = 'transform .25s ease-out, opacity .25s ease-out';
+    s.webkitTransform = s.transform = '';
+    s.opacity = '';
   }
 
   function subHead(t) {
@@ -764,8 +843,8 @@ body.eve .badge{color:#1b1b1b}
     document.body.className = mode === 'eve' || mode === 'late' ? 'eve' : '';
     if (U.view === 'plan' && mode === 'late') U.view = 'home';
     var v = U.view;
-    app.className = v === 'home' ? '' : 'kc k-' + ({ pays: 'pay', plan: 'plan', shop: 'shop', house: 'house', dates: 'dates' })[v];
-    html = v === 'home' ? home(now, mode) : v === 'pays' ? paysView(now) : v === 'plan' ? planView(now, mode) : listView(v, now);
+    app.className = v === 'home' ? '' : 'kc k-' + ({ pays: 'pay', plan: 'plan', shop: 'shop', house: 'house', dates: 'dates', money: 'money' })[v];
+    html = v === 'home' ? home(now, mode) : v === 'pays' ? paysView(now) : v === 'plan' ? planView(now, mode) : v === 'money' ? moneyView(now) : listView(v, now);
     app.innerHTML = html + offLabel();
   }
 
@@ -777,6 +856,7 @@ body.eve .badge{color:#1b1b1b}
   function release() { if (pressed) { pressed.className = pressed.className.replace(/ ?pressed/g, ''); pressed = null; } }
   app.addEventListener('touchstart', function (e) {
     U.touched = Date.now(); // любое касание, даже свайп без «нажатия», откладывает сон
+    U.sx = e.touches[0].clientX; U.sy = e.touches[0].clientY;
     release();
     var el = e.target;
     while (el && el !== app && !(el.getAttribute && el.getAttribute('data-a'))) el = el.parentNode;
@@ -784,7 +864,19 @@ body.eve .badge{color:#1b1b1b}
   }, false);
   app.addEventListener('touchmove', release, false);
   app.addEventListener('touchcancel', release, false);
-  app.addEventListener('touchend', function () { setTimeout(release, 150); }, false);
+  app.addEventListener('touchend', function (e) {
+    setTimeout(release, 150);
+    // Свайп влево с главного — второй экран (счета); свайп вправо из любого раздела — на главный.
+    var t = e.changedTouches[0], dx = t.clientX - U.sx, dy = t.clientY - U.sy;
+    if (!D || !CFG.key || U.sleep || modeOf(new Date()) === 'night') return;
+    if (Math.abs(dx) < 90 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+    if (dx < 0 && U.view === 'home') U.view = 'money';
+    else if (dx > 0 && U.view !== 'home') U.view = 'home';
+    else return;
+    U.left = BACK_AFTER;
+    render();
+    slide(dx < 0 ? 1 : -1);
+  }, false);
 
   app.addEventListener('click', function (e) {
     var now = new Date();
