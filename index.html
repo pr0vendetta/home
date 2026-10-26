@@ -677,17 +677,12 @@ body.eve .badge{color:#1b1b1b}
       'Суммы меняются в боте: «💰 Счета»</div></section></div>' + pages(1);
   }
 
-  // Перелистывание: экран въезжает сбоку (dir 1 — справа, -1 — слева).
-  function slide(dir) {
+  // Перелистывание: экран едет за пальцем (x в px), t — длительность анимации в секундах (0 — сразу).
+  function shift(x, t) {
     var s = app.style;
-    s.webkitTransition = s.transition = 'none';
-    s.webkitTransform = s.transform = 'translateX(' + dir * 90 + 'px)';
-    s.opacity = '0.2';
-    void app.offsetWidth;
-    s.webkitTransition = '-webkit-transform .25s ease-out, opacity .25s ease-out';
-    s.transition = 'transform .25s ease-out, opacity .25s ease-out';
-    s.webkitTransform = s.transform = '';
-    s.opacity = '';
+    s.webkitTransition = t ? '-webkit-transform ' + t + 's ease-out' : 'none';
+    s.transition = t ? 'transform ' + t + 's ease-out' : 'none';
+    s.webkitTransform = s.transform = x ? 'translate3d(' + x + 'px,0,0)' : '';
   }
 
   function subHead(t) {
@@ -857,25 +852,49 @@ body.eve .badge{color:#1b1b1b}
   app.addEventListener('touchstart', function (e) {
     U.touched = Date.now(); // любое касание, даже свайп без «нажатия», откладывает сон
     U.sx = e.touches[0].clientX; U.sy = e.touches[0].clientY;
+    drag = { lock: null, dx: 0 };
     release();
     var el = e.target;
     while (el && el !== app && !(el.getAttribute && el.getAttribute('data-a'))) el = el.parentNode;
     if (el && el !== app) { el.className += ' pressed'; pressed = el; }
   }, false);
-  app.addEventListener('touchmove', release, false);
-  app.addEventListener('touchcancel', release, false);
-  app.addEventListener('touchend', function (e) {
+  // Свайп влево с главного — второй экран (счета); свайп вправо из любого раздела — на главный.
+  // Экран едет за пальцем; отпустили дальше четверти ширины — листается, иначе возвращается.
+  var drag = null, busy = false;
+  function swipeTo(dx) {
+    if (!D || !CFG.key || U.sleep || modeOf(new Date()) === 'night') return null;
+    if (dx < 0 && U.view === 'home') return 'money';
+    if (dx > 0 && U.view !== 'home') return 'home';
+    return null;
+  }
+  app.addEventListener('touchmove', function (e) {
+    release();
+    e.preventDefault(); // без этого Safari тянет всю страницу «резинкой»
+    if (!drag || busy) return;
+    var t = e.touches[0], dx = t.clientX - U.sx, dy = t.clientY - U.sy;
+    if (!drag.lock && (Math.abs(dx) > 12 || Math.abs(dy) > 12)) drag.lock = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y';
+    if (drag.lock !== 'x') return;
+    drag.dx = dx;
+    shift(swipeTo(dx) ? dx : dx / 4, 0); // туда, где экрана нет, — тянется с сопротивлением
+  }, false);
+  app.addEventListener('touchcancel', function () { release(); if (drag && drag.lock === 'x' && !busy) shift(0, 0.2); drag = null; }, false);
+  app.addEventListener('touchend', function () {
     setTimeout(release, 150);
-    // Свайп влево с главного — второй экран (счета); свайп вправо из любого раздела — на главный.
-    var t = e.changedTouches[0], dx = t.clientX - U.sx, dy = t.clientY - U.sy;
-    if (!D || !CFG.key || U.sleep || modeOf(new Date()) === 'night') return;
-    if (Math.abs(dx) < 90 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
-    if (dx < 0 && U.view === 'home') U.view = 'money';
-    else if (dx > 0 && U.view !== 'home') U.view = 'home';
-    else return;
-    U.left = BACK_AFTER;
-    render();
-    slide(dx < 0 ? 1 : -1);
+    var d = drag; drag = null;
+    if (!d || d.lock !== 'x' || busy) return;
+    var w = app.offsetWidth, to = swipeTo(d.dx), dir = d.dx < 0 ? -1 : 1;
+    if (!to || Math.abs(d.dx) < w / 4) return shift(0, 0.2);
+    busy = true;
+    shift(dir * w, 0.2); // старый экран уезжает
+    setTimeout(function () {
+      U.view = to;
+      U.left = BACK_AFTER;
+      render();
+      shift(-dir * w, 0); // новый ставим за краем с другой стороны
+      void app.offsetWidth;
+      shift(0, 0.25); // и он въезжает
+      setTimeout(function () { busy = false; }, 260);
+    }, 200);
   }, false);
 
   app.addEventListener('click', function (e) {
